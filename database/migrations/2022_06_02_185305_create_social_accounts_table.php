@@ -15,9 +15,10 @@ return new class extends Migration
     {
         Schema::create('social_accounts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id');
-            $table->string('provider_name');
-            $table->string('provider_id');
+            $table->unsignedBigInteger('user_id');
+            $table->string('social_id');
+            $table->string('social_provider');
+            $table->string('social_name');
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users');

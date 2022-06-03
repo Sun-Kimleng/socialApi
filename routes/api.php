@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Auth\FacebookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,3 +18,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->group( function () {
     Route::resource('products', ProductController::class);
 });
+
+Route::get('login/facebook/url', [FacebookController::class, 'loginUrl']);
+Route::get('login/facebook/callback', [FacebookController::class, 'loginCallback']);
