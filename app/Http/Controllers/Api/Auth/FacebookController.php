@@ -10,6 +10,8 @@ use App\Models\SocialAccount;
 use Illuminate\Support\Facades\Response;
 use App\Models\User;
 use App\Http\Resources\UserResource;
+use Exception;
+use Illuminate\Support\Facades\Auth;
 
 class FacebookController extends Controller
 {
@@ -25,28 +27,34 @@ class FacebookController extends Controller
     public function loginCallback()
     {
         
-        $facebookUser = Socialite::driver('google')->stateless()->user();
-        $user = null;
 
-        DB::transaction(function () use ($facebookUser, &$user) {
-            $socialAccount = SocialAccount::firstOrNew(
-                ['social_id' => $facebookUser->getId(), 'social_provider' => 'google'],
-                ['social_name' => $facebookUser->getName()]
-            );
+            try {
+        
+                $user = Socialite::driver('facebook')->stateless()->user();
+                $isUser = User::where('fb_id', $user->id)->first();
+               
+         
+                if($isUser){
+                    Auth::login($isUser);
+                    $token= $isUser->createToken($user->token)->plainTextToken;
+                    return response()->json(['facebook_user'=>$isUser, 'token'=>$token]);
+                }else{
+                    $createUser = User::create([
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'fb_id' => $user->id,
+                        'password' => encrypt('admin@123')
+                    ]);
+                    
+                    $token= $createUser->createToken($user->token)->plainTextToken;
 
-            if (!($user = $socialAccount->user)) {
-                $user = User::create([
-                    'email' => $facebookUser->getEmail(),
-                    'name' => $facebookUser->getName(),
-                ]);
-                $socialAccount->fill(['user_id' => $user->id])->save();
+                    return response()->json(['facebook_user'=>$user, 'token'=>$token, 'status'=>200]);
+                }
+        
+            } catch (Exception $exception) {
+                dd($exception->getMessage());
             }
-        });
 
-        return response()->json([
-            'user' => new UserResource($user),
-            'google_user' => $facebookUser,
-        ]);
     
     }
     
