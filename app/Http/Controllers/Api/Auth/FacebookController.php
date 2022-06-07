@@ -29,30 +29,30 @@ class FacebookController extends Controller
         
 
             try {
-        
-                $user = Socialite::driver('facebook')->stateless()->user();
-                $isUser = User::where('fb_id', $user->id)->first();
-               
-         
+                
+            $user = Socialite::driver('facebook')->stateless()->user();
+            $isUser = User::where('fb_id', $user->id)->first();
+
                 if($isUser){
+                    
                     Auth::login($isUser);
-                    $token= $isUser->createToken($user->token)->plainTextToken;
-                    return response()->json(['facebook_user'=>$isUser, 'token'=>$token]);
+                    
+                    return response()->json(['token' =>$user->token, 'status'=>'200']);
+                
                 }else{
                     $createUser = User::create([
                         'name' => $user->name,
                         'email' => $user->email,
                         'fb_id' => $user->id,
+                        'fb_token' => $user->token,
                         'password' => encrypt('admin@123')
                     ]);
-                    
-                    $token= $createUser->createToken($user->token)->plainTextToken;
-
-                    return response()->json(['facebook_user'=>$user, 'token'=>$token, 'status'=>200]);
+                    Auth::login($createUser);
+                    return response()->json(['data'=>$user, 'token' =>$user->token]);
                 }
         
             } catch (Exception $exception) {
-                dd($exception->getMessage());
+                return response()->json(['error']);
             }
 
     
